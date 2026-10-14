@@ -1,10 +1,42 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { totalItems } = useCart();
+  const [role, setRole] = useState("guest");
+  const pathname = usePathname();
+  useEffect(() => {
+    let active = true;
+    const refresh = () =>
+      fetch("/api/shop?kind=me")
+        .then((r) => {
+          if (!r.ok) throw Error();
+          return r.json();
+        })
+        .then((me) => {
+          if (active) setRole(me.role);
+        })
+        .catch(() => {
+          if (active) setRole("guest");
+        });
+    refresh();
+    window.addEventListener("outcast-session", refresh);
+    return () => {
+      active = false;
+      window.removeEventListener("outcast-session", refresh);
+    };
+  }, [pathname]);
+  const accountHref =
+    role === "admin" ? "/admin" : role === "customer" ? "/cuenta" : "/login";
+  const accountLabel =
+    role === "admin"
+      ? "Administración"
+      : role === "customer"
+        ? "Mi cuenta"
+        : "Iniciar sesión";
   return (
     <header className="site-header">
       <nav className="shell nav">
@@ -15,7 +47,7 @@ export default function Navbar() {
           <Link href="/productos">Catálogo</Link>
           <Link href="/oversize">Oversize</Link>
           <Link href="/nosotros">La marca</Link>
-          <Link href="/cuenta">Mi cuenta</Link>
+          <Link href={accountHref}>{accountLabel}</Link>
         </div>
         <div className="actions">
           <Link href="/carrito" aria-label={`Bolsa con ${totalItems} prendas`}>
@@ -37,7 +69,7 @@ export default function Navbar() {
             ["/productos", "Catálogo"],
             ["/oversize", "Oversize"],
             ["/nosotros", "La marca"],
-            ["/cuenta", "Mi cuenta"],
+            [accountHref, accountLabel],
           ].map(([url, label]) => (
             <Link key={url} href={url} onClick={() => setOpen(false)}>
               {label}

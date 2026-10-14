@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "../../context/CartContext";
 import { request, money } from "../../lib/client";
@@ -9,6 +9,16 @@ export default function Page() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [order, setOrder] = useState(null);
+  const [me, setMe] = useState(null);
+  useEffect(() => {
+    fetch("/api/shop?kind=me")
+      .then((r) => {
+        if (!r.ok) throw Error();
+        return r.json();
+      })
+      .then(setMe)
+      .catch(() => setMe({ role: "guest" }));
+  }, []);
   async function checkout(e) {
     e.preventDefault();
     setBusy(true);
@@ -94,6 +104,25 @@ export default function Page() {
             onChange={() => setOrder(null)}
           >
             <h2>Resumen del pedido</h2>
+            {me?.role === "guest" && (
+              <div className="checkout-login">
+                <p>
+                  ¿Ya tienes cuenta? Inicia sesión para guardar este pedido en
+                  tu historial.
+                </p>
+                <Link href="/login?next=/carrito">
+                  Iniciar sesión o crear cuenta ↗
+                </Link>
+                <p className="muted">
+                  También puedes completar el formulario como invitado.
+                </p>
+              </div>
+            )}
+            {me?.role === "customer" && (
+              <p className="muted">
+                Sesión iniciada: {me.name}. Este pedido aparecerá en tu cuenta.
+              </p>
+            )}
             <p>
               Subtotal: <strong>{money(totalPrice)} MXN</strong>
             </p>

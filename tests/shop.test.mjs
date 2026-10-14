@@ -200,6 +200,9 @@ test("Permissions, server pricing, WhatsApp checkout, customer isolation and tra
     "/cuenta",
     "/admin",
     "/carrito",
+    "/login",
+    "/login?next=/carrito",
+    "/login?role=admin",
   ])
     assert.equal((await fetch(base + route)).status, 200);
   assert.equal((await fetch(base + "/productos/" + id)).status, 200);

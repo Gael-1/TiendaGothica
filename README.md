@@ -51,3 +51,7 @@ El pago con tarjeta se deja pendiente. Debe integrarse con un checkout de provee
 - Recursos: se reutilizan Next.js, React, Tailwind y SQLite. Sin dependencias nuevas. No se inventaron medidas ni fotografías.
 
 Pendientes para la próxima etapa: carga de fotos desde administración, recuperación/verificación de cuenta, datos y políticas reales del negocio, alojamiento persistente, proveedor de pago con tarjeta y revisión visual en navegador.
+
+## Acceso unificado
+
+`/login` ofrece acceso de cliente, registro y acceso de administrador. La navegación muestra Iniciar sesión, Mi cuenta o Administración según la sesión. Al comprar, `/login?next=/carrito` vuelve a la bolsa después del acceso de cliente sin perder las prendas. Se conserva la compra como invitado. El administrador usa ADMIN_PASSWORD, no una cuenta cliente; los permisos continúan verificándose en servidor. No hay nuevas dependencias.

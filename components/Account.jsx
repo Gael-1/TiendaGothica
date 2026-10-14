@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { request, money, statuses } from "../lib/client";
 export default function Account({ admin = false }) {
   const [me, setMe] = useState(null),
@@ -7,7 +8,6 @@ export default function Account({ admin = false }) {
     [products, setProducts] = useState([]),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [register, setRegister] = useState(false),
     [editing, setEditing] = useState(null);
   const load = useCallback(async () => {
     const r = await fetch("/api/shop?kind=me");
@@ -39,6 +39,7 @@ export default function Account({ admin = false }) {
     try {
       await request(body);
       await load();
+      window.dispatchEvent(new Event("outcast-session"));
       return true;
     } catch (e) {
       setError(e.message);
@@ -46,16 +47,6 @@ export default function Account({ admin = false }) {
     } finally {
       setBusy(false);
     }
-  }
-  async function auth(e) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    await act({
-      action: admin ? "adminLogin" : register ? "register" : "login",
-      name: f.get("name"),
-      email: f.get("email"),
-      password: f.get("password"),
-    });
   }
   async function save(e) {
     e.preventDefault();
@@ -81,7 +72,7 @@ export default function Account({ admin = false }) {
       form.reset();
     }
   }
-  const allowed = admin ? me?.role === "admin" : me && me.role !== "guest";
+  const allowed = admin ? me?.role === "admin" : me?.role === "customer";
   return (
     <section className="shell section">
       <p className="eyebrow">{admin ? "ADMINISTRACIÓN" : "ÁREA DE CLIENTE"}</p>
@@ -93,64 +84,23 @@ export default function Account({ admin = false }) {
       )}
       {!me ? (
         <p>Cargando…</p>
+      ) : !admin && me.role === "admin" ? (
+        <div className="panel">
+          <p>Tu sesión es de administrador.</p>
+          <Link className="button" href="/admin">
+            Ir a administración
+          </Link>
+        </div>
       ) : !allowed ? (
-        <form className="panel narrow" onSubmit={auth}>
-          <h2>
-            {admin
-              ? "Acceso de administrador"
-              : register
-                ? "Crear cuenta"
-                : "Iniciar sesión"}
-          </h2>
-          {!admin && (
-            <>
-              {register && (
-                <label>
-                  Nombre
-                  <input
-                    name="name"
-                    required
-                    maxLength="100"
-                    autoComplete="name"
-                  />
-                </label>
-              )}
-              <label>
-                Correo
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                />
-              </label>
-            </>
-          )}
-          <label>
-            Contraseña
-            <input
-              name="password"
-              type="password"
-              required
-              minLength={admin ? 12 : 10}
-              maxLength="200"
-              autoComplete={register ? "new-password" : "current-password"}
-            />
-          </label>
-          <button className="button" disabled={busy}>
-            Entrar
-          </button>
-          {!admin && (
-            <button type="button" onClick={() => setRegister(!register)}>
-              {register ? "Ya tengo cuenta" : "Crear una cuenta"}
-            </button>
-          )}
-          <p className="muted">
-            {admin
-              ? "Acceso protegido. La contraseña se configura en el servidor."
-              : "Puedes comprar por WhatsApp sin cuenta. Los pedidos hechos con sesión iniciada aparecen aquí."}
-          </p>
-        </form>
+        <div className="panel narrow">
+          <h2>Inicia sesión para continuar</h2>
+          <Link
+            className="button"
+            href={admin ? "/login?role=admin" : "/login"}
+          >
+            Iniciar sesión
+          </Link>
+        </div>
       ) : (
         <>
           <div className="actions">

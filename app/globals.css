@@ -485,3 +485,44 @@ legend {
     gap: 24px;
   }
 }
+
+.login-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+  min-height: 65vh;
+}
+.login-intro h1 {
+  font-size: clamp(42px, 6vw, 76px);
+}
+.login-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.login-tabs button {
+  padding: 12px;
+  border: 1px solid #555;
+  flex: 1;
+}
+.login-tabs button[aria-pressed="true"] {
+  border-color: #ce263b;
+  background: #ce263b;
+  color: white;
+}
+.checkout-login {
+  padding: 16px;
+  border-left: 3px solid #ce263b;
+  background: #1c1516;
+  margin: 20px 0;
+}
+@media (max-width: 760px) {
+  .login-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .login-tabs {
+    flex-wrap: wrap;
+  }
+}
