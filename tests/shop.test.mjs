@@ -10,7 +10,14 @@ let server;
 before(async () => {
   server = spawn(
     process.execPath,
-    ["node_modules/next/dist/bin/next", "start", "-p", "3198", "-H", "127.0.0.1"],
+    [
+      "node_modules/next/dist/bin/next",
+      "start",
+      "-p",
+      "3198",
+      "-H",
+      "127.0.0.1",
+    ],
     {
       env: {
         ...process.env,
@@ -33,7 +40,8 @@ before(async () => {
 });
 after(async () => {
   server?.kill();
-  if (server && server.exitCode === null) await new Promise((r) => server.once("exit", r));
+  if (server && server.exitCode === null)
+    await new Promise((r) => server.once("exit", r));
   rmSync(directory, { recursive: true, force: true });
 });
 async function post(body, cookie = "", origin = base) {
@@ -194,4 +202,19 @@ test("Permissions, server pricing, WhatsApp checkout, customer isolation and tra
     "/carrito",
   ])
     assert.equal((await fetch(base + route)).status, 200);
+  assert.equal((await fetch(base + "/productos/" + id)).status, 200);
+  assert.equal((await fetch(base + "/productos/missing")).status, 404);
+  assert.equal(
+    (await post({ ...product, id, active: false }, admin)).status,
+    200,
+  );
+  assert.equal((await fetch(base + "/productos/" + id)).status, 404);
+  assert.equal(
+    (await post({ ...body, name: "Hidden product" }, customer)).status,
+    409,
+  );
+  assert.equal(
+    (await post({ action: "logout" }, admin, "not-a-url")).status,
+    403,
+  );
 });

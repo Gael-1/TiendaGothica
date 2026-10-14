@@ -6,6 +6,7 @@ import {
   useEffect,
   useSyncExternalStore,
 } from "react";
+import { cartLimit } from "../lib/catalog";
 const Context = createContext();
 const subscribe = () => () => {};
 export function CartProvider({ children }) {
@@ -50,10 +51,16 @@ export function CartProvider({ children }) {
       } catch {}
   }, [cart, ready]);
   const addToCart = (p, size, quantity = 1) => {
-    if (!size || !Number.isInteger(quantity) || quantity < 1) return;
+    if (
+      !size ||
+      !Number.isInteger(quantity) ||
+      quantity < 1 ||
+      cartLimit(p, size) < 1
+    )
+      return;
     setCart((prev) => {
       const found = prev.find((i) => i.id === p.id && i.size === size);
-      const limit = Math.min(99, p.stock?.[size] || 99);
+      const limit = cartLimit(p, size);
       return found
         ? prev.map((i) =>
             i === found

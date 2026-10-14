@@ -41,3 +41,13 @@ Sesiones HttpOnly de 24 horas, contraseñas cliente con scrypt, permisos verific
 Antes de lanzar: definir nombre definitivo (Outcast proviene del código original), fotografías y productos, puntos de entrega, costos/zonas de envío, políticas de cambios y aviso de privacidad con los datos del negocio. El texto de la marca es provisional.
 
 El pago con tarjeta se deja pendiente. Debe integrarse con un checkout de proveedor, credenciales del comercio, webhooks verificados y confirmación de pago en servidor. Nunca guardar número de tarjeta ni CVV en esta aplicación.
+
+## Avance: catálogo y detalle de prendas
+
+- Filtros por categoría y talla disponible, búsqueda por nombre/descripción, solo disponibles y orden por precio.
+- Página `/productos/[id]` con descripción, imagen, selección de talla/cantidad, consulta de medidas por WhatsApp y metadatos del producto.
+- Las prendas ocultas no tienen página pública. La página de detalle consulta el producto actual en servidor.
+- La selección avisa al alcanzar existencias en la bolsa. El servidor sigue validando stock al preparar/confirmar el pedido.
+- Recursos: se reutilizan Next.js, React, Tailwind y SQLite. Sin dependencias nuevas. No se inventaron medidas ni fotografías.
+
+Pendientes para la próxima etapa: carga de fotos desde administración, recuperación/verificación de cuenta, datos y políticas reales del negocio, alojamiento persistente, proveedor de pago con tarjeta y revisión visual en navegador.

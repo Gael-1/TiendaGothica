@@ -59,8 +59,15 @@ export async function GET(req) {
   );
 }
 export async function POST(req) {
-  if (!req.headers.get("origin") || new URL(req.headers.get("origin")).host !== req.headers.get("host"))
+  try {
+    if (
+      !req.headers.get("origin") ||
+      new URL(req.headers.get("origin")).host !== req.headers.get("host")
+    )
+      return reply({ error: "Origen no permitido." }, 403);
+  } catch {
     return reply({ error: "Origen no permitido." }, 403);
+  }
   try {
     const b = await req.json();
     const s = await session();

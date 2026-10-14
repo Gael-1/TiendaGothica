@@ -403,3 +403,85 @@ form > .button {
     gap: 14px;
   }
 }
+
+.catalog-filters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #121212;
+  border: 1px solid #333;
+}
+.catalog-filters label {
+  margin: 0;
+}
+.catalog-filters .checkbox {
+  grid-column: span 2;
+}
+.product-link:hover h2 {
+  color: #f15d6d;
+}
+.size-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.size-buttons button {
+  border: 1px solid #555;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px;
+}
+.size-buttons button[aria-pressed="true"] {
+  background: #ce263b;
+  border-color: #ce263b;
+  color: white;
+}
+.size-buttons button:disabled {
+  text-decoration: line-through;
+}
+fieldset {
+  margin-top: 20px;
+}
+legend {
+  font-size: 13px;
+  color: #bbb;
+}
+.product-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 32px;
+}
+.detail-price {
+  font-size: 26px;
+  color: #f15d6d;
+  font-weight: 750;
+  margin-bottom: 24px;
+}
+.product-description {
+  white-space: pre-line;
+  line-height: 1.8;
+  color: #bbb;
+  margin-bottom: 28px;
+}
+.purchase-info {
+  margin-top: 30px;
+}
+.purchase-info h2 {
+  font-size: 18px;
+}
+@media (max-width: 760px) {
+  .catalog-filters {
+    grid-template-columns: 1fr;
+  }
+  .catalog-filters .checkbox {
+    grid-column: auto;
+  }
+  .product-detail {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
