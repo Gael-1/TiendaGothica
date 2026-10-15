@@ -1,88 +1,113 @@
-'use client';
-
-import { createContext, useContext, useState, useEffect } from 'react';
-
-const CartContext = createContext();
-
+"use client";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
+import { cartLimit } from "../lib/catalog";
+const Context = createContext();
+const subscribe = () => () => {};
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
-
-  // Cargar carrito desde localStorage al iniciar
+  const [ready, setReady] = useState(false);
+  const hydrated = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
   useEffect(() => {
-    const savedCart = localStorage.getItem('outcast_cart');
-    if (savedCart) {
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      let saved = [];
       try {
-        setCart(JSON.parse(savedCart));
-      } catch (e) {
-        console.error("Error cargando carrito de localStorage", e);
-      }
-    }
+        const data = JSON.parse(localStorage.getItem("outcast_cart") || "[]");
+        if (Array.isArray(data))
+          saved = data.filter(
+            (i) =>
+              typeof i.id === "string" &&
+              typeof i.name === "string" &&
+              typeof i.size === "string" &&
+              Number.isFinite(i.price) &&
+              i.price > 0 &&
+              Number.isInteger(i.quantity) &&
+              i.quantity > 0 &&
+              i.quantity <= 99,
+          );
+      } catch {}
+      setCart(saved);
+      setReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  // Guardar en localStorage cada vez que el carrito cambie
   useEffect(() => {
-    localStorage.setItem('outcast_cart', JSON.stringify(cart));
-  }, [cart]);
-
-  const addToCart = (product, size = 'M', quantity = 1) => {
-    setCart((prevCart) => {
-      const existingIndex = prevCart.findIndex(
-        (item) => item.id === product.id && item.size === size
-      );
-
-      if (existingIndex > -1) {
-        const updated = [...prevCart];
-        updated[existingIndex].quantity += quantity;
-        return updated;
-      }
-
-      return [...prevCart, { ...product, size, quantity }];
+    if (ready)
+      try {
+        localStorage.setItem("outcast_cart", JSON.stringify(cart));
+      } catch {}
+  }, [cart, ready]);
+  const addToCart = (p, size, quantity = 1) => {
+    if (
+      !size ||
+      !Number.isInteger(quantity) ||
+      quantity < 1 ||
+      cartLimit(p, size) < 1
+    )
+      return;
+    setCart((prev) => {
+      const found = prev.find((i) => i.id === p.id && i.size === size);
+      const limit = cartLimit(p, size);
+      return found
+        ? prev.map((i) =>
+            i === found
+              ? { ...i, quantity: Math.min(limit, i.quantity + quantity) }
+              : i,
+          )
+        : [
+            ...prev,
+            {
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              image: p.image,
+              size,
+              quantity: Math.min(limit, quantity),
+            },
+          ];
     });
   };
-
-  const removeFromCart = (id, size) => {
-    setCart((prevCart) => prevCart.filter((item) => !(item.id === id && item.size === size)));
-  };
-
-  const updateQuantity = (id, size, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(id, size);
-      return;
-    }
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.id === id && item.size === size ? { ...item, quantity } : item
-      )
+  const removeFromCart = (id, size) =>
+    setCart((prev) => prev.filter((i) => !(i.id === id && i.size === size)));
+  const updateQuantity = (id, size, n) => {
+    if (!Number.isInteger(n) || n > 99) return;
+    if (n <= 0) return removeFromCart(id, size);
+    setCart((prev) =>
+      prev.map((i) =>
+        i.id === id && i.size === size ? { ...i, quantity: n } : i,
+      ),
     );
   };
-
-  const clearCart = () => setCart([]);
-
-  const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const totalPrice = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
   return (
-    <CartContext.Provider
+    <Context.Provider
       value={{
         cart,
+        ready: ready && hydrated,
         addToCart,
         removeFromCart,
         updateQuantity,
-        clearCart,
-        totalItems,
-        totalPrice,
+        clearCart: () => setCart([]),
+        totalItems: cart.reduce((s, i) => s + i.quantity, 0),
+        totalPrice: cart.reduce((s, i) => s + i.price * i.quantity, 0),
       }}
     >
       {children}
-    </CartContext.Provider>
+    </Context.Provider>
   );
 }
-
-// ⚠️ AQUÍ ESTÁ LA CLAVE: Debe llevar "export" nombrado
 export function useCart() {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart debe ser usado dentro de un CartProvider');
-  }
-  return context;
+  return useContext(Context);
 }
