@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
@@ -41,7 +42,10 @@ export default function Navbar() {
     <header className="site-header">
       <nav className="shell nav">
         <Link className="wordmark" href="/">
-          OUTCAST<span>STREETWEAR</span>
+          <Image src="/Logo.png" alt="" width={52} height={52} priority />
+          <span className="brand-text">
+            OUTCAST<span>STREETWEAR</span>
+          </span>
         </Link>
         <div className="desktop-links">
           <Link href="/productos">Catálogo</Link>

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import ImagePicker from "./ImagePicker";
 import { request, money, statuses } from "../lib/client";
 export default function Account({ admin = false }) {
   const [me, setMe] = useState(null),
@@ -8,7 +9,8 @@ export default function Account({ admin = false }) {
     [products, setProducts] = useState([]),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [editing, setEditing] = useState(null);
+    [editing, setEditing] = useState(null),
+    [formVersion, setFormVersion] = useState(0);
   const load = useCallback(async () => {
     const r = await fetch("/api/shop?kind=me");
     if (!r.ok) throw Error("No se pudo cargar la cuenta.");
@@ -55,21 +57,44 @@ export default function Account({ admin = false }) {
     const stock = Object.fromEntries(
       ["XS", "S", "M", "L", "XL", "XXL"].map((s) => [s, Number(f.get(s))]),
     );
-    if (
-      await act({
-        action: "saveProduct",
-        id: editing?.id,
-        name: f.get("name"),
-        description: f.get("description"),
-        price: Number(f.get("price")),
-        category: f.get("category"),
-        image: f.get("image"),
-        active: f.get("active") === "on",
-        stock,
-      })
-    ) {
-      setEditing(null);
-      form.reset();
+    setBusy(true);
+    setError("");
+    try {
+      let image = editing?.image || "";
+      const file = f.get("photo");
+      if (file instanceof File && file.size) {
+        const upload = new FormData();
+        upload.set("image", file);
+        const response = await fetch("/api/images", {
+          method: "POST",
+          body: upload,
+        });
+        const result = await response.json();
+        if (!response.ok)
+          throw new Error(result.error || "Error subiendo la imagen.");
+        image = result.url;
+      }
+      if (
+        await act({
+          action: "saveProduct",
+          id: editing?.id,
+          name: f.get("name"),
+          description: f.get("description"),
+          price: Number(f.get("price")),
+          category: f.get("category"),
+          image,
+          active: f.get("active") === "on",
+          stock,
+        })
+      ) {
+        setEditing(null);
+        form.reset();
+        setFormVersion((v) => v + 1);
+      }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
     }
   }
   const allowed = admin ? me?.role === "admin" : me?.role === "customer";
@@ -112,7 +137,7 @@ export default function Account({ admin = false }) {
           {admin && (
             <div className="admin-grid">
               <form
-                key={editing?.id || "new"}
+                key={(editing?.id || "new") + formVersion}
                 className="panel"
                 onSubmit={save}
               >
@@ -157,14 +182,7 @@ export default function Account({ admin = false }) {
                     <option value="hoodie">Hoodie</option>
                   </select>
                 </label>
-                <label>
-                  Foto (archivo en public)
-                  <input
-                    name="image"
-                    placeholder="/playera.jpg"
-                    defaultValue={editing?.image}
-                  />
-                </label>
+                <ImagePicker current={editing?.image || ""} />
                 <div className="sizes">
                   {["XS", "S", "M", "L", "XL", "XXL"].map((s) => (
                     <label key={s}>

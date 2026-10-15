@@ -55,3 +55,7 @@ Pendientes para la próxima etapa: carga de fotos desde administración, recuper
 ## Acceso unificado
 
 `/login` ofrece acceso de cliente, registro y acceso de administrador. La navegación muestra Iniciar sesión, Mi cuenta o Administración según la sesión. Al comprar, `/login?next=/carrito` vuelve a la bolsa después del acceso de cliente sin perder las prendas. Se conserva la compra como invitado. El administrador usa ADMIN_PASSWORD, no una cuenta cliente; los permisos continúan verificándose en servidor. No hay nuevas dependencias.
+
+## Fotografías desde administración
+
+El panel abre el selector de archivos del equipo y muestra una vista previa. Al guardar, `/api/images` valida sesión de administrador y formatos JPG/PNG/WebP de hasta 5 MB; Sharp decodifica y convierte a WebP, elimina metadatos y limita dimensiones a 1600 × 2000. Las imágenes se guardan en la misma base SQLite persistente y se sirven por `/api/images/[id]`. Respaldar SQLite incluye las fotografías. Las fotos anteriores se conservan cuando no se selecciona un archivo nuevo; al reemplazar, el archivo anterior permanece guardado. El logo original `public/Logo.png` vuelve a mostrarse en la navegación.

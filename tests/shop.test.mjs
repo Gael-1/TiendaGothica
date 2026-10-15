@@ -81,13 +81,51 @@ test("Permissions, server pricing, WhatsApp checkout, customer isolation and tra
   });
   assert.equal(login.status, 200);
   const admin = login.cookie;
+
+  async function upload(bytes, type, cookie = admin) {
+    const f = new FormData();
+    f.set("image", new Blob([bytes], { type }), "photo.png");
+    const response = await fetch(base + "/api/images", {
+      method: "POST",
+      headers: { Origin: base, Cookie: cookie },
+      body: f,
+    });
+    return { status: response.status, data: await response.json() };
+  }
+  const sharp = (await import("sharp")).default;
+  const png = await sharp({
+    create: { width: 8, height: 8, channels: 3, background: "#ff0000" },
+  })
+    .png()
+    .toBuffer();
+  assert.equal((await upload(png, "image/png", "")).status, 403);
+  assert.equal(
+    (await upload(Buffer.from("not a photo"), "image/png")).status,
+    400,
+  );
+  assert.equal(
+    (await upload(Buffer.from("<svg/>"), "image/svg+xml")).status,
+    400,
+  );
+  assert.equal(
+    (await upload(Buffer.alloc(5 * 1024 * 1024 + 1), "image/png")).status,
+    400,
+  );
+  const image = await upload(png, "image/png");
+  assert.equal(image.status, 201);
+  const served = await fetch(base + image.data.url);
+  assert.equal(served.status, 200);
+  assert.equal(served.headers.get("content-type"), "image/webp");
+  assert.ok((await served.arrayBuffer()).byteLength > 0);
+  assert.equal((await fetch(base + "/api/images/not-valid")).status, 404);
+  assert.equal((await fetch(base + "/Logo.png")).status, 200);
   const product = {
     action: "saveProduct",
     name: "Test Tee",
     description: "Test",
     price: 450,
     category: "oversize",
-    image: "",
+    image: image.data.url,
     stock: { M: 5, L: 0 },
     active: true,
   };
